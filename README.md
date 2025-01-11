@@ -3,7 +3,9 @@
 
 The AES-128 encryption algorithm is shown in Figure1. It mainly consists of 10 rounds. Each round includes SubBytes, ShiftRows, MixColumns and AddRoundKey, except the final round. The final round only has SubBytes, ShiftRows and AddRoundKey.
 
-![Project Screenshot](assets/screenshot.png)
+![](images/4.drawio.png)
+
+*Fig.1*
 
 The AES-128 algorithm operates on 128-bit blocks, encompassing the plaintext, ciphertext, subkeys, and the outputs of each cryptographic operation. This structure allows for the data to be segmented into 16 bytes, denoted as  S_15~S_0, as shown in Table1. Here, S_0 corresponds to the eight least significant bits of the block, while S_15 corresponds to the eight most significant bits of the block. 
 
@@ -18,7 +20,9 @@ The AES-128 algorithm operates on 128-bit blocks, encompassing the plaintext, ci
 ## Methodology
 In this section, an iterative architecture of the AES-128 encryption algorithm is adopted for the resource-limited circumstances in this project, as shown in Figure2. In contrast to the fully pipelined architecture, this architecture utilizes fewer resources because it reuses the same SubBytes, ShiftRows, MixColumns and AddRoundKey components during each round. According to the architecture shown in Figure2, it takes 11 clock cycles to generate the ciphertext, which mean the next plaintext can be entered after 11 clock cycles.
 
-![Project Screenshot](assets/screenshot.png)
+![](images/2.drawio.png)
+
+*Fig.2*
 
 ### SubBytes component
 
@@ -34,11 +38,15 @@ In this component, the 128-bit input block is segmented into 16 bytes, denoted a
 
 Multiplication by 2 in the finite field GF (2^8) can be implemented as a left shift followed by a conditional bitwise XOR with 0x1B, which represents the irreducible polynomial x8 + x4 + x3 + x + 1 in AES, if the leftmost bit (before shifting) is 1, as illustrated in Figure3. This operation ensures that multiplication stays within the bounds of GF (2^8).
 
-![Project Screenshot](assets/screenshot.png)
+![](images/x2.png)
+
+*Fig.3*
 
 Multiplication by 3 can be achieved by first multiplying the input byte by 2 (as described above) and then adding (XORing in GF (2^8)) the original byte to the result, as shown in Figure4.
 
-![Project Screenshot](assets/screenshot.png)
+![](images/x3.png)
+
+*Fig.4*
 
 Both multiplication by 2 and by 3 are implemented as two functions in VHDL. For the 128-bit input block, the first step is to divide the block into 16 bytes, denoted as  S_15~S_0, as shown in Table1. Then each column in Table1 is multiplied by the constant matrix in the finite field GF (2^8). Since the constant matrix only contains 1, 2 and 3, calling the function of multiplication by 2 and by 3 in GF (2^8) can solve this matrix multiplication. After the matrix multiplication, the transformed columns can be obtained. Finally, the 128-bit output block will be available through concatenating the transformed columns.
 
@@ -50,7 +58,9 @@ This component is simply implemented as the 128-bit input XORing the 128-bit sub
 
 KeyExpansion component takes the current 128-bit subkey and 8-bit Rconst as input, and outputs the next subkey. In this component, the 128-bit input block is split into 16 bytes, denoted as  S_15~S_0, as shown in Table1. The process of key expansion can be briefly described in Figure 5. For example, the first sub key is generated from the initial 128-bit key. The fourth word of the initial key, i.e. the thirty-two least significant bits, will be used as input to G function. In G function, this 32-bit vector will go through RotWord section, SubWord section, Rcon section. RotWord operation performs a cyclic permutation of the bytes within a word. Specifically, it rotates the bytes to the left, meaning that each byte is shifted one position to the left, and the leftmost byte is moved to the rightmost position. In this example, the word can be represented as [S_3, S_2, S_1, S_0], applying RotWord to this word would result in [S_2, S_1, S_0, S_3]. The SubWord operation utilizes the same S-box function as the one employed in the MixColumns component. Rcon operation expands an 8-bit Rconst (Round constant) into a 32-bit vector, and then XORs it with the output of SubWord operation. Finally, the output of G function is XORed with the first word of the initial key to generate the first word of the sub key.
 
-![Project Screenshot](assets/screenshot.png)
+![](images/3.drawio.png)
+
+*Fig.5*
 
 ### Controller
 
@@ -70,7 +80,9 @@ In the top entity, data registers are used to store the result obtained in the p
 ## Simulation
 This design has been coded using the VHDL language and the Vivado software has been utilized for the simulation. The timing waveforms for the encryption stages have been depicted in Figure6.
 
-![Project Screenshot](assets/screenshot.png)
+![](images/simulation.png)
+
+*Fig.6*
 
 According to the Figure6, when the “done” signal is asserted high, which indicates the completion of the encryption process, the ciphertext is “83678f4a55edfe15ead65b2fc7c503d3” in hexadecimal, given the plaintext is “1002a1b1c3d34767afaf5f6f34367275” and the key is “11223344a1b2c3e4aabbccdd55667790” in hexadecimal.
 
@@ -84,4 +96,6 @@ As a result, if the clock frequency is 100MHz, the throughput will be 1163Mbit/s
 
 When implemented on an Artix-7 FPGA, this design utilizes merely 1055 lookup tables, 264 flip-flops, and 1 block RAM, showcasing a footprint that is significantly more compact compared to similar designs referenced in the literature.
 
-![Project Screenshot](assets/screenshot.png)
+![](images/7.png)
+
+*Fig.7*
